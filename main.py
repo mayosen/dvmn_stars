@@ -14,9 +14,9 @@ async def fly_garbage(canvas, garbage_frame, column, speed):
     await animate.wait_for(randint(0, 30))
 
     while row < canvas_rows:
-        animate.add_frame(canvas, row, column, garbage_frame)
+        animate.draw_frame(canvas, row, column, garbage_frame)
         await asyncio.sleep(0)
-        animate.add_frame(canvas, row, column, garbage_frame, True)
+        animate.draw_frame(canvas, row, column, garbage_frame, True)
         row += speed
 
 
