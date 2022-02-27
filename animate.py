@@ -92,7 +92,7 @@ async def draw_ship(canvas, frames, speed=3, ship_row=15, ship_column=20):
 
         if space_pressed:
             bullet_column = ship_column + (frame_columns // 2)
-            add_coroutines([fire(canvas, ship_row, bullet_column, -0.8)])
+            add_coroutines([fire(canvas, ship_row, bullet_column, rows_speed=-speed-0.8)])
 
         frame = next(frames)
 
