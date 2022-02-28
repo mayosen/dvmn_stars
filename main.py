@@ -1,6 +1,7 @@
 import curses
 import asyncio
 from random import randint, choice
+
 import event_loop
 import animate
 
@@ -30,7 +31,7 @@ async def fill_orbit_with_garbage(canvas, frames):
         _, frame_columns = animate.get_frame_size(frame)
         column = randint(0, canvas_columns - frame_columns - 1)
         # TODO: Баг с застреванием фрейма вверху
-        # speed = choice([0.1, 0.2, 0.3, 0.4, 0.5])
+        # speed = choice((0.1, 0.2, 0.3, 0.4, 0.5))
         speed = 0.5
 
         garbage.append(
@@ -52,27 +53,24 @@ async def fill_orbit_with_garbage(canvas, frames):
 
 
 def draw(canvas):
+    curses.use_default_colors()
     curses.curs_set(False)
     canvas.nodelay(True)
-    
-    stars = animate.draw_stars(canvas, amount=50)
 
-    ship_frames = [
-        animate.read_frame('rocket_frame_1.txt'),
-        animate.read_frame('rocket_frame_2.txt'),
-    ]
-    ship = animate.draw_ship(canvas, ship_frames, speed=1)
+    stars = animate.get_stars(canvas, amount=50)
 
-    garbage_frames = [
-        animate.read_frame(item) for item in [
-            'duck.txt', 'hubble.txt', 'lamp.txt', 
-            'trash_large.txt', 'trash_small.txt', 
-            'trash_x1.txt',
-        ]
-    ]
+    ships = ('rocket_frame_1.txt', 'rocket_frame_2.txt')
+    ship_frames = [animate.read_frame(frame) for frame in ships]
+    ship = animate.get_ship(canvas, ship_frames, speed=1)
+
+    garbage = (
+        'duck.txt', 'hubble.txt', 'lamp.txt', 'trash_large.txt',
+        'trash_small.txt', 'trash_x1.txt'
+    )
+    garbage_frames = [animate.read_frame(frame) for frame in garbage]
     garbage = fill_orbit_with_garbage(canvas, garbage_frames)
 
-    event_loop.add_coroutines([*stars, garbage, ship, ])
+    event_loop.add_coroutines(*stars, garbage, ship)
     event_loop.loop(canvas)
 
 

@@ -5,8 +5,8 @@ coroutines = []
 tic_timeout = 0.1
 
 
-def add_coroutines(iterable):
-    coroutines.extend(iterable)
+def add_coroutines(*coros):
+    coroutines.extend(coros)
 
 
 def loop(canvas):
