@@ -5,7 +5,7 @@ coroutines = []
 tic_timeout = 0.1
 
 
-def add_coroutines(*coros):
+def add_coroutine(*coros):
     coroutines.extend(coros)
 
 

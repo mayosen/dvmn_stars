@@ -4,16 +4,7 @@ from random import randint, choice
 from itertools import cycle
 
 from physics import update_speed
-from event_loop import add_coroutines
-
-
-def read_frame(name):
-    """Read oneline animation from project folder."""
-
-    with open(f'frames/{name}', 'r') as file:
-        text = file.read()
-
-    return text
+from event_loop import add_coroutine
 
 
 def get_frame_size(text):
@@ -146,14 +137,17 @@ async def fire(canvas, start_row, start_column,
 async def get_ship(canvas, frames, speed=3, ship_row=15, ship_column=20):
     canvas_rows, canvas_columns = canvas.getmaxyx()
     frame_rows, frame_columns = get_frame_size(frames[0])
-    frame_half = frame_columns // 2
     frames = cycle([frames[0], frames[0], frames[1], frames[1]])
     row_speed = column_speed = 0
 
+    frame_center = frame_columns // 2
+    bottom_limit = canvas_rows - frame_rows
+    right_limit = canvas_columns - frame_columns
+
     while True:
-        delta_rows, delta_columns, space_pressed = read_controls(canvas)
+        rows_dir, columns_dir, space_pressed = read_controls(canvas)
         row_speed, column_speed = update_speed(
-            row_speed, column_speed, delta_rows, delta_columns
+            row_speed, column_speed, rows_dir, columns_dir
         )
         ship_row += row_speed
         ship_column += column_speed
@@ -161,26 +155,27 @@ async def get_ship(canvas, frames, speed=3, ship_row=15, ship_column=20):
         if ship_row < 0:
             ship_row = 0
         elif ship_row + frame_rows > canvas_rows:
-            ship_row = canvas_rows - frame_rows
+            ship_row = bottom_limit
 
         if ship_column < 0:
             ship_column = 0
         elif ship_column + frame_columns > canvas_columns:
-            ship_column = canvas_columns - frame_columns
+            ship_column = right_limit
 
         if space_pressed:
-            bullet_column = ship_column + frame_half
-            bullet_r_speed = -speed - 0.8
+            bullet_column = ship_column + frame_center
+            bullet_r_speed = - (speed + 0.8)
             if column_speed > 0:
                 bullet_c_speed = column_speed + 0.1
             elif column_speed == 0:
                 bullet_c_speed = 0
             else:
                 bullet_c_speed = column_speed - 0.1
-            add_coroutines(
+            add_coroutine(
                 fire(canvas, ship_row, bullet_column,
                      rows_speed=bullet_r_speed,
-                     columns_speed=bullet_c_speed)
+                     columns_speed=bullet_c_speed
+                )
             )
 
         frame = next(frames)

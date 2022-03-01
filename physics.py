@@ -45,10 +45,6 @@ def update_speed(row_speed, column_speed,
     Return new speed value (row_speed, column_speed)
     """
 
-    if fading < 0 or fading > 1:
-        raise ValueError(f'Wrong columns_direction value {fading}. '
-                         f'Expects float between 0 and 1.')
-
     # Гасим скорость, чтобы корабль останавливался со временем
     row_speed *= fading
     column_speed *= fading
@@ -59,8 +55,7 @@ def update_speed(row_speed, column_speed,
     if rows_direction != 0:
         row_speed = _apply_acceleration(row_speed, row_speed_limit,
                                         rows_direction > 0)
-
-    if columns_direction != 0:
+    elif columns_direction != 0:
         column_speed = _apply_acceleration(column_speed, column_speed_limit,
                                            columns_direction > 0)
 

@@ -4,6 +4,7 @@ from random import randint, choice
 
 import event_loop
 import animate
+from frames import read_frame, ship_frames, garbage_frames
 
 
 # TODO: Перенести функции для мусора в animate
@@ -59,18 +60,13 @@ def draw(canvas):
 
     stars = animate.get_stars(canvas, amount=50)
 
-    ships = ('rocket_frame_1.txt', 'rocket_frame_2.txt')
-    ship_frames = [animate.read_frame(frame) for frame in ships]
-    ship = animate.get_ship(canvas, ship_frames, speed=1)
+    frames = read_frame(*ship_frames)
+    ship = animate.get_ship(canvas, frames, speed=1)
 
-    garbage = (
-        'duck.txt', 'hubble.txt', 'lamp.txt', 'trash_large.txt',
-        'trash_small.txt', 'trash_x1.txt'
-    )
-    garbage_frames = [animate.read_frame(frame) for frame in garbage]
-    garbage = fill_orbit_with_garbage(canvas, garbage_frames)
+    frames = read_frame(*garbage_frames)
+    garbage = fill_orbit_with_garbage(canvas, frames)
 
-    event_loop.add_coroutines(*stars, garbage, ship)
+    event_loop.add_coroutine(*stars, garbage, ship)
     event_loop.loop(canvas)
 
 
