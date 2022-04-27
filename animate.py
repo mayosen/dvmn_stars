@@ -2,20 +2,19 @@ import curses
 import asyncio
 from random import randint, choice
 from itertools import cycle
+from typing import List
 
+from frames import Frame
 from physics import update_speed
-from event_loop import add_coroutine
+from events import add_coroutine
 
+SPACE_KEY_CODE = 32
+LEFT_KEY_CODE = 260
+RIGHT_KEY_CODE = 261
+UP_KEY_CODE = 259
+DOWN_KEY_CODE = 258
 
-def get_frame_size(text):
-    """Calculate size of multiline text fragment.
-    Return pair — number of rows and columns."""
-
-    lines = text.splitlines()
-    rows = len(lines)
-    columns = max([len(line) for line in lines])
-
-    return rows, columns
+STAR_SYMBOLS = ('*', '+', '.', ':')
 
 
 async def wait_for(ticks):
@@ -23,33 +22,29 @@ async def wait_for(ticks):
         await asyncio.sleep(0)
 
 
-async def blink(canvas, row, column, symbol='*'):
+async def blink(canvas, row, column, symbol=STAR_SYMBOLS[0]):
     canvas.addstr(row, column, symbol, curses.A_DIM)
     await wait_for(randint(0, 30))
 
     while True:
         canvas.addstr(row, column, symbol)
         await wait_for(3)
-
         canvas.addstr(row, column, symbol, curses.A_BOLD)
         await wait_for(5)
-
         canvas.addstr(row, column, symbol)
         await wait_for(3)
-
         canvas.addstr(row, column, symbol, curses.A_DIM)
         await wait_for(20)
 
 
 def get_stars(canvas, amount=15, offset_row=1, offset_column=1):
     rows, columns = canvas.getmaxyx()
-    symbols = ('+', '*', '.', ':')
     stars = [
         blink(
             canvas,
             randint(offset_row, rows - offset_row),
             randint(offset_column, columns - offset_column),
-            choice(symbols)
+            choice(STAR_SYMBOLS)
         ) for _ in range(amount)
     ]
 
@@ -80,12 +75,6 @@ def draw_frame(canvas, start_row, start_column, text, negative=False):
 
 
 def read_controls(canvas):
-    SPACE_KEY_CODE = 32
-    LEFT_KEY_CODE = 260
-    RIGHT_KEY_CODE = 261
-    UP_KEY_CODE = 259
-    DOWN_KEY_CODE = 258
-
     rows_direction = columns_direction = 0
     space_pressed = False
 
@@ -108,8 +97,7 @@ def read_controls(canvas):
     return rows_direction, columns_direction, space_pressed
 
 
-async def fire(canvas, start_row, start_column, 
-               rows_speed=-0.3, columns_speed=0):
+async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0):
     row, column = start_row, start_column
 
     canvas.addstr(round(row), round(column), '*')
@@ -134,9 +122,9 @@ async def fire(canvas, start_row, start_column,
         column += columns_speed
 
 
-async def get_ship(canvas, frames, speed=3, ship_row=15, ship_column=20):
+async def get_ship(canvas, frames: List[Frame], speed=3, ship_row=15, ship_column=20):
     canvas_rows, canvas_columns = canvas.getmaxyx()
-    frame_rows, frame_columns = get_frame_size(frames[0])
+    frame_rows, frame_columns = frames[0].sizes
     frames = cycle([frames[0], frames[0], frames[1], frames[1]])
     row_speed = column_speed = 0
 
@@ -164,21 +152,23 @@ async def get_ship(canvas, frames, speed=3, ship_row=15, ship_column=20):
 
         if space_pressed:
             bullet_column = ship_column + frame_center
-            bullet_r_speed = - (speed + 0.8)
+            bullet_row_speed = - (speed + 0.8)
+
             if column_speed > 0:
-                bullet_c_speed = column_speed + 0.1
+                bullet_column_speed = column_speed + 0.1
             elif column_speed == 0:
-                bullet_c_speed = 0
+                bullet_column_speed = 0
             else:
-                bullet_c_speed = column_speed - 0.1
+                bullet_column_speed = column_speed - 0.1
+
             add_coroutine(
                 fire(canvas, ship_row, bullet_column,
-                     rows_speed=bullet_r_speed,
-                     columns_speed=bullet_c_speed
-                )
+                     rows_speed=bullet_row_speed,
+                     columns_speed=bullet_column_speed,
+                     )
             )
 
         frame = next(frames)
-        draw_frame(canvas, ship_row, ship_column, frame)
+        draw_frame(canvas, ship_row, ship_column, frame.frame)
         await asyncio.sleep(0)
-        draw_frame(canvas, ship_row, ship_column, frame, negative=True)
+        draw_frame(canvas, ship_row, ship_column, frame.frame, negative=True)
