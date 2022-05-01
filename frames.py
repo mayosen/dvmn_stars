@@ -15,6 +15,7 @@ def get_frame_size(text):
 
 class Frame:
     def __init__(self, file: str):
+        self.uid = file.removesuffix(".txt")
         self.frame = read_frame(file)
         self.rows, self.columns = self.sizes = get_frame_size(self.frame)
 

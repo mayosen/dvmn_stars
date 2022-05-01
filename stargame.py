@@ -1,32 +1,19 @@
-import curses
 import asyncio
+import curses
+from curses import window
 from random import randint, choice
-from typing import List
 
 import events
-import animate
-from frames import GARBAGE_FRAMES, SHIP_FRAMES, Frame
+import objects
+from frames import Frame, GARBAGE_FRAMES, SHIP_FRAMES
+from obstacles import show_obstacles, Obstacle
 
 
-# TODO: Перенести функции для мусора в animate
-
-
-async def fly_garbage(canvas, frame: str, column, speed):
-    canvas_rows, _ = canvas.getmaxyx()
-    row = 0
-    await animate.wait_for(randint(0, 110))
-
-    while row < canvas_rows:
-        animate.draw_frame(canvas, row, column, frame)
-        await asyncio.sleep(0)
-        animate.draw_frame(canvas, row, column, frame, True)
-        row += speed
-
-
-async def fill_orbit_with_garbage(canvas, frames: List[Frame]):
+async def fill_orbit_with_garbage(canvas, frames: list[Frame]):
     _, canvas_columns = canvas.getmaxyx()
     count = 5
     garbage = []
+    obstacles = []
 
     def append_random_garbage():
         frame = choice(frames)
@@ -34,13 +21,16 @@ async def fill_orbit_with_garbage(canvas, frames: List[Frame]):
         speed = 0.2
 
         garbage.append(
-            fly_garbage(canvas, frame.frame, column, speed)
+            objects.fly_garbage(canvas, frame.frame, column, speed)
         )
+        # obstacles.append(Obstacle(0, column, frame.rows, frame.columns, frame.uid))
 
     for _ in range(count):
         append_random_garbage()
 
     while True:
+        # await show_obstacles(canvas, obstacles)
+
         for coro in garbage.copy():
             try:
                 coro.send(None)
@@ -51,17 +41,17 @@ async def fill_orbit_with_garbage(canvas, frames: List[Frame]):
         await asyncio.sleep(0)
 
 
-def draw(canvas):
+def draw(canvas: window):
     curses.use_default_colors()
     curses.curs_set(False)
     canvas.nodelay(True)
 
-    stars = animate.get_stars(canvas, amount=50)
-    ship = animate.get_ship(canvas, SHIP_FRAMES, speed=1)
+    stars = objects.get_stars(canvas, amount=50)
+    ship = objects.get_ship(canvas, SHIP_FRAMES, speed=1)
     garbage = fill_orbit_with_garbage(canvas, GARBAGE_FRAMES)
 
     events.add_coroutine(*stars, ship, garbage)
-    events.start_loop(canvas)
+    events.loop(canvas)
 
 
 if __name__ == '__main__':

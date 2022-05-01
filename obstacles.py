@@ -1,5 +1,6 @@
 import asyncio
-from animate import draw_frame
+
+from utils import draw_frame
 
 
 class Obstacle:
@@ -22,8 +23,7 @@ class Obstacle:
         row, column = self.get_bounding_box_corner_pos()
         return row, column, self.get_bounding_box_frame()
 
-    def has_collision(self, obj_corner_row, obj_corner_column, obj_size_rows=1,
-                      obj_size_columns=1):
+    def has_collision(self, obj_corner_row, obj_corner_column, obj_size_rows=1, obj_size_columns=1):
         """Determine if collision has occurred. Return True or False."""
 
         return _has_collision(
@@ -35,24 +35,25 @@ class Obstacle:
 
 
 def _get_bounding_box_lines(rows, columns):
-    yield ' ' + '-' * columns + ' '
+    yield ' ' + ('-' * columns) + ' '
     for _ in range(rows):
-        yield '|' + ' ' * columns + '|'
-    yield ' ' + '-' * columns + ' '
+        yield '|' + (' ' * columns) + '|'
+    yield ' ' + ('-' * columns) + ' '
 
 
-def _is_point_inside(corner_row, corner_column, size_rows, size_columns,
-                     point_row, point_row_column):
+def _is_point_inside(corner_row, corner_column, size_rows, size_columns, point_row, point_column):
     rows_flag = corner_row <= point_row < corner_row + size_rows
-    columns_flag = corner_column <= point_row_column < corner_column + size_columns
+    columns_flag = corner_column <= point_column < corner_column + size_columns
 
     return rows_flag and columns_flag
 
 
-def _has_collision(obstacle_corner, obstacle_size, obj_corner,
-                   obj_size=(1, 1)):
-    """Determine if collision has occurred. Return True or False."""
-
+def _has_collision(
+        obstacle_corner: tuple[int, int],
+        obstacle_size: tuple[int, int],
+        obj_corner: tuple[int, int],
+        obj_size=(1, 1),
+):
     opposite_obstacle_corner = (
         obstacle_corner[0] + obstacle_size[0] - 1,
         obstacle_corner[1] + obstacle_size[1] - 1,
@@ -71,14 +72,9 @@ def _has_collision(obstacle_corner, obstacle_size, obj_corner,
     ])
 
 
-async def show_obstacles(canvas, obstacles):
-    """Display bounding boxes of every obstacle in a list"""
-
+async def show_obstacles(canvas, obstacles: list[Obstacle]):
     while True:
-        boxes = []
-
-        for obstacle in obstacles:
-            boxes.append(obstacle.dump_bounding_box())
+        boxes = [obstacle.dump_bounding_box() for obstacle in obstacles]
 
         for row, column, frame in boxes:
             draw_frame(canvas, row, column, frame)

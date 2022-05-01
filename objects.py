@@ -1,18 +1,12 @@
-import curses
 import asyncio
-from random import randint, choice
+import curses
 from itertools import cycle
-from typing import List
+from random import randint, choice
 
+from utils import read_controls, draw_frame
+from events import add_coroutine
 from frames import Frame
 from physics import update_speed
-from events import add_coroutine
-
-SPACE_KEY_CODE = 32
-LEFT_KEY_CODE = 260
-RIGHT_KEY_CODE = 261
-UP_KEY_CODE = 259
-DOWN_KEY_CODE = 258
 
 STAR_SYMBOLS = ('*', '+', '.', ':')
 
@@ -51,52 +45,6 @@ def get_stars(canvas, amount=15, offset_row=1, offset_column=1):
     return stars
 
 
-def draw_frame(canvas, start_row, start_column, text, negative=False):
-    rows_number, columns_number = canvas.getmaxyx()
-
-    for row, line in enumerate(text.splitlines(), round(start_row)):
-        if row < 0:
-            continue
-        elif row >= rows_number:
-            break
-
-        for column, symbol in enumerate(line, round(start_column)):
-            if column < 0:
-                continue
-            if column >= columns_number:
-                break
-            if symbol == ' ':
-                continue
-            if row == rows_number - 1 and column == columns_number - 1:
-                continue
-
-            symbol = symbol if not negative else ' '
-            canvas.addch(row, column, symbol)
-
-
-def read_controls(canvas):
-    rows_direction = columns_direction = 0
-    space_pressed = False
-
-    while True:
-        pressed_key_code = canvas.getch()
-
-        if pressed_key_code == -1:
-            break
-        elif pressed_key_code == UP_KEY_CODE:
-            rows_direction = -1
-        elif pressed_key_code == DOWN_KEY_CODE:
-            rows_direction = 1
-        elif pressed_key_code == RIGHT_KEY_CODE:
-            columns_direction = 1
-        elif pressed_key_code == LEFT_KEY_CODE:
-            columns_direction = -1
-        elif pressed_key_code == SPACE_KEY_CODE:
-            space_pressed = True
-
-    return rows_direction, columns_direction, space_pressed
-
-
 async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0):
     row, column = start_row, start_column
 
@@ -122,7 +70,7 @@ async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0
         column += columns_speed
 
 
-async def get_ship(canvas, frames: List[Frame], speed=3, ship_row=15, ship_column=20):
+async def get_ship(canvas, frames: list[Frame], speed=3, ship_row=15, ship_column=20):
     canvas_rows, canvas_columns = canvas.getmaxyx()
     frame_rows, frame_columns = frames[0].sizes
     frames = cycle([frames[0], frames[0], frames[1], frames[1]])
@@ -172,3 +120,15 @@ async def get_ship(canvas, frames: List[Frame], speed=3, ship_row=15, ship_colum
         draw_frame(canvas, ship_row, ship_column, frame.frame)
         await asyncio.sleep(0)
         draw_frame(canvas, ship_row, ship_column, frame.frame, negative=True)
+
+
+async def fly_garbage(canvas, frame: str, column, speed):
+    canvas_rows, _ = canvas.getmaxyx()
+    row = 0
+    await wait_for(randint(0, 110))
+
+    while row < canvas_rows:
+        draw_frame(canvas, row, column, frame)
+        await asyncio.sleep(0)
+        draw_frame(canvas, row, column, frame, True)
+        row += speed
