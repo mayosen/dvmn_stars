@@ -39,3 +39,5 @@ EXPLOSION_FRAMES = tuple(
         "explosion_1.txt", "explosion_2.txt", "explosion_3.txt", "explosion_4.txt"
     )
 )
+
+GAMEOVER_FRAME = Frame("gameover.txt")

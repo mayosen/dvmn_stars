@@ -6,7 +6,7 @@ from random import randint, choice
 
 import events
 from events import add_coroutine, obstacles, blown_obstacles
-from frames import SHIP_FRAMES, GARBAGE_FRAMES, EXPLOSION_FRAMES
+from frames import SHIP_FRAMES, GARBAGE_FRAMES, EXPLOSION_FRAMES, GAMEOVER_FRAME
 from obstacles import Obstacle
 from physics import update_speed
 from utils import read_controls, draw_frame
@@ -92,6 +92,11 @@ async def get_ship(canvas: window, speed=3, ship_row=15, ship_column=20):
     right_limit = canvas_columns - frame.columns
 
     while True:
+        for obstacle in events.obstacles.get():
+            if obstacle.has_collision(ship_row, ship_column, frame.rows, frame.columns):
+                events.add_coroutine(show_gameover(canvas))
+                return
+
         rows_dir, columns_dir, space_pressed = read_controls(canvas)
         row_speed, column_speed = update_speed(
             row_speed, column_speed, rows_dir, columns_dir
@@ -111,7 +116,7 @@ async def get_ship(canvas: window, speed=3, ship_row=15, ship_column=20):
 
         if space_pressed:
             bullet_column = ship_column + frame.center
-            bullet_row_speed = - (speed + 0.8)
+            bullet_row_speed = -(speed + 0.8)
 
             if column_speed > 0:
                 bullet_column_speed = column_speed + 0.1
@@ -172,3 +177,14 @@ async def explode(canvas: window, center_row, center_column):
         draw_frame(canvas, corner_row, corner_column, frame.frame)
         await asyncio.sleep(0)
         draw_frame(canvas, corner_row, corner_column, frame.frame, negative=True)
+
+
+async def show_gameover(canvas: window):
+    frame = GAMEOVER_FRAME
+    canvas_rows, canvas_columns = canvas.getmaxyx()
+    row = (canvas_rows - frame.rows) // 2
+    column = (canvas_columns - frame.columns) // 2
+
+    while True:
+        draw_frame(canvas, row, column, frame.frame)
+        await asyncio.sleep(0)
