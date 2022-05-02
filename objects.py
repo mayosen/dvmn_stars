@@ -5,7 +5,7 @@ from random import randint, choice
 
 import events
 from events import add_coroutine, obstacles, blown_obstacles
-from frames import SHIP_FRAMES, GARBAGE_FRAMES
+from frames import SHIP_FRAMES, GARBAGE_FRAMES, EXPLOSION_FRAMES
 from obstacles import Obstacle
 from physics import update_speed
 from utils import read_controls, draw_frame
@@ -69,7 +69,7 @@ async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0
             if obstacle.has_collision(row, column):
                 blown_obstacles.add(obstacle)
                 obstacles.remove(obstacle)
-                # TODO: спавнить еще мусор через некоторое время
+                events.add_coroutine(explode(canvas, row, column))
                 return
 
         canvas.addstr(round(row), round(column), symbol)
@@ -159,3 +159,15 @@ async def fill_orbit_with_garbage(canvas):
         garbage = fly_garbage(canvas, obstacle, column)
         events.add_coroutine(garbage)
         await wait_for(randint(10, 110))
+
+
+async def explode(canvas, center_row, center_column):
+    rows, columns = EXPLOSION_FRAMES[0].sizes
+    corner_row = center_row - rows // 2
+    corner_column = center_column - columns // 2
+    curses.beep()
+
+    for frame in EXPLOSION_FRAMES:
+        draw_frame(canvas, corner_row, corner_column, frame.frame)
+        await asyncio.sleep(0)
+        draw_frame(canvas, corner_row, corner_column, frame.frame, negative=True)

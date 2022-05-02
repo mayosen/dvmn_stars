@@ -21,19 +21,21 @@ class Frame:
         self.center = self.columns // 2
 
 
-SHIP_FRAMES = tuple(
-    [Frame(item) for item in ('rocket_frame_1.txt', 'rocket_frame_2.txt')]
-)
+SHIP_FRAMES = tuple(Frame(item) for item in ('rocket_frame_1.txt', 'rocket_frame_2.txt'))
 
 GARBAGE_FRAMES = tuple(
-    [
-        Frame(item) for item in (
-            'duck.txt',
-            'hubble.txt',
-            'lamp.txt',
-            'trash_large.txt',
-            'trash_small.txt',
-            'trash_x1.txt'
-        )
-    ]
+    Frame(item) for item in (
+        'duck.txt',
+        'hubble.txt',
+        'lamp.txt',
+        'trash_large.txt',
+        'trash_small.txt',
+        'trash_x1.txt'
+    )
+)
+
+EXPLOSION_FRAMES = tuple(
+    Frame(item) for item in (
+        "explosion_1.txt", "explosion_2.txt", "explosion_3.txt", "explosion_4.txt"
+    )
 )
