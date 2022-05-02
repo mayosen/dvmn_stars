@@ -3,8 +3,9 @@ import curses
 from itertools import cycle
 from random import randint, choice
 
-from events import add_coroutine, remove_obstacle
-from frames import SHIP_FRAMES
+import events
+from events import add_coroutine, obstacles, blown_obstacles
+from frames import SHIP_FRAMES, GARBAGE_FRAMES
 from obstacles import Obstacle
 from physics import update_speed
 from utils import read_controls, draw_frame
@@ -64,6 +65,13 @@ async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0
     curses.beep()
 
     while 0 < row < max_row and 0 < column < max_column:
+        for obstacle in obstacles.get():
+            if obstacle.has_collision(row, column):
+                blown_obstacles.add(obstacle)
+                obstacles.remove(obstacle)
+                # TODO: спавнить еще мусор через некоторое время
+                return
+
         canvas.addstr(round(row), round(column), symbol)
         await asyncio.sleep(0)
         canvas.addstr(round(row), round(column), ' ')
@@ -74,12 +82,13 @@ async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0
 async def get_ship(canvas, speed=3, ship_row=15, ship_column=20):
     canvas_rows, canvas_columns = canvas.getmaxyx()
     first, second = SHIP_FRAMES
-    frame_rows, frame_columns = first.sizes
+    frame = first
+    frame_rows, frame_columns = frame.sizes
     frames_iterator = cycle([first, first, second, second])
     row_speed = column_speed = 0
 
-    bottom_limit = canvas_rows - first.rows
-    right_limit = canvas_columns - first.columns
+    bottom_limit = canvas_rows - frame.rows
+    right_limit = canvas_columns - frame.columns
 
     while True:
         rows_dir, columns_dir, space_pressed = read_controls(canvas)
@@ -100,7 +109,7 @@ async def get_ship(canvas, speed=3, ship_row=15, ship_column=20):
             ship_column = right_limit
 
         if space_pressed:
-            bullet_column = ship_column + first.center
+            bullet_column = ship_column + frame.center
             bullet_row_speed = - (speed + 0.8)
 
             if column_speed > 0:
@@ -125,12 +134,28 @@ async def get_ship(canvas, speed=3, ship_row=15, ship_column=20):
 
 async def fly_garbage(canvas, obstacle: Obstacle, column, speed=0.2):
     canvas_rows, _ = canvas.getmaxyx()
-    frame = obstacle.frame
 
     while obstacle.row < canvas_rows:
-        draw_frame(canvas, obstacle.row, column, frame)
+        if obstacle in blown_obstacles.get():
+            blown_obstacles.remove(obstacle)
+            return
+
+        draw_frame(canvas, obstacle.row, column, obstacle.frame)
         await asyncio.sleep(0)
-        draw_frame(canvas, obstacle.row, column, frame, True)
+        draw_frame(canvas, obstacle.row, column, obstacle.frame, True)
         obstacle.row += speed
 
-    remove_obstacle(obstacle)
+    obstacles.remove(obstacle)
+
+
+async def fill_orbit_with_garbage(canvas):
+    _, canvas_columns = canvas.getmaxyx()
+
+    while True:
+        frame = choice(GARBAGE_FRAMES)
+        column = randint(0 - frame.center, canvas_columns - frame.center)
+        obstacle = Obstacle(frame, column)
+        obstacles.add(obstacle)
+        garbage = fly_garbage(canvas, obstacle, column)
+        events.add_coroutine(garbage)
+        await wait_for(randint(10, 110))

@@ -6,24 +6,43 @@ from typing import Coroutine
 from obstacles import Obstacle
 
 COROUTINES = deque()
-OBSTACLES = deque()
 TIC_TIMEOUT = 0.1
+
+
+class obstacles:
+    _obstacles = deque()
+
+    @classmethod
+    def add(cls, obstacle: Obstacle):
+        cls._obstacles.append(obstacle)
+
+    @classmethod
+    def get(cls):
+        return cls._obstacles
+
+    @classmethod
+    def remove(cls, obstacle: Obstacle):
+        cls._obstacles.remove(obstacle)
+
+
+class blown_obstacles:
+    _blown_obstacles = deque()
+
+    @classmethod
+    def add(cls, obstacle: Obstacle):
+        cls._blown_obstacles.append(obstacle)
+
+    @classmethod
+    def get(cls):
+        return cls._blown_obstacles
+
+    @classmethod
+    def remove(cls, obstacle: Obstacle):
+        cls._blown_obstacles.remove(obstacle)
 
 
 def add_coroutine(*coroutines: Coroutine):
     COROUTINES.extend(coroutines)
-
-
-def get_obstacles():
-    return OBSTACLES
-
-
-def add_obstacle(obstacle: Obstacle):
-    OBSTACLES.append(obstacle)
-
-
-def remove_obstacle(obstacle: Obstacle):
-    OBSTACLES.remove(obstacle)
 
 
 def loop(canvas: window):
