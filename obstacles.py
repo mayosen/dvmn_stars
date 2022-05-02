@@ -1,15 +1,18 @@
 import asyncio
+from collections import deque
 
+from frames import Frame
 from utils import draw_frame
 
 
 class Obstacle:
-    def __init__(self, row, column, rows_size=1, columns_size=1, uid=None):
-        self.row = row
+    def __init__(self, frame: Frame, column: int):
+        self.frame = frame.frame
+        self.row = 0
         self.column = column
-        self.rows_size = rows_size
-        self.columns_size = columns_size
-        self.uid = uid
+        self.rows_size = frame.rows
+        self.columns_size = frame.columns
+        self.uid = frame.uid
 
     def get_bounding_box_frame(self):
         # increment box size to compensate obstacle movement
@@ -72,7 +75,7 @@ def _has_collision(
     ])
 
 
-async def show_obstacles(canvas, obstacles: list[Obstacle]):
+async def show_obstacles(canvas, obstacles: deque[Obstacle]):
     while True:
         boxes = [obstacle.dump_bounding_box() for obstacle in obstacles]
 

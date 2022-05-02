@@ -3,10 +3,11 @@ import curses
 from itertools import cycle
 from random import randint, choice
 
-from utils import read_controls, draw_frame
-from events import add_coroutine
-from frames import Frame
+from events import add_coroutine, remove_obstacle
+from frames import SHIP_FRAMES
+from obstacles import Obstacle
 from physics import update_speed
+from utils import read_controls, draw_frame
 
 STAR_SYMBOLS = ('*', '+', '.', ':')
 
@@ -31,7 +32,7 @@ async def blink(canvas, row, column, symbol=STAR_SYMBOLS[0]):
         await wait_for(20)
 
 
-def get_stars(canvas, amount=15, offset_row=1, offset_column=1):
+def get_stars(canvas, amount=50, offset_row=1, offset_column=1):
     rows, columns = canvas.getmaxyx()
     stars = [
         blink(
@@ -70,15 +71,15 @@ async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0
         column += columns_speed
 
 
-async def get_ship(canvas, frames: list[Frame], speed=3, ship_row=15, ship_column=20):
+async def get_ship(canvas, speed=3, ship_row=15, ship_column=20):
     canvas_rows, canvas_columns = canvas.getmaxyx()
-    frame_rows, frame_columns = frames[0].sizes
-    frames = cycle([frames[0], frames[0], frames[1], frames[1]])
+    first, second = SHIP_FRAMES
+    frame_rows, frame_columns = first.sizes
+    frames_iterator = cycle([first, first, second, second])
     row_speed = column_speed = 0
 
-    frame_center = frame_columns // 2
-    bottom_limit = canvas_rows - frame_rows
-    right_limit = canvas_columns - frame_columns
+    bottom_limit = canvas_rows - first.rows
+    right_limit = canvas_columns - first.columns
 
     while True:
         rows_dir, columns_dir, space_pressed = read_controls(canvas)
@@ -99,7 +100,7 @@ async def get_ship(canvas, frames: list[Frame], speed=3, ship_row=15, ship_colum
             ship_column = right_limit
 
         if space_pressed:
-            bullet_column = ship_column + frame_center
+            bullet_column = ship_column + first.center
             bullet_row_speed = - (speed + 0.8)
 
             if column_speed > 0:
@@ -116,19 +117,20 @@ async def get_ship(canvas, frames: list[Frame], speed=3, ship_row=15, ship_colum
                      )
             )
 
-        frame = next(frames)
+        frame = next(frames_iterator)
         draw_frame(canvas, ship_row, ship_column, frame.frame)
         await asyncio.sleep(0)
         draw_frame(canvas, ship_row, ship_column, frame.frame, negative=True)
 
 
-async def fly_garbage(canvas, frame: str, column, speed):
+async def fly_garbage(canvas, obstacle: Obstacle, column, speed=0.2):
     canvas_rows, _ = canvas.getmaxyx()
-    row = 0
-    await wait_for(randint(0, 110))
+    frame = obstacle.frame
 
-    while row < canvas_rows:
-        draw_frame(canvas, row, column, frame)
+    while obstacle.row < canvas_rows:
+        draw_frame(canvas, obstacle.row, column, frame)
         await asyncio.sleep(0)
-        draw_frame(canvas, row, column, frame, True)
-        row += speed
+        draw_frame(canvas, obstacle.row, column, frame, True)
+        obstacle.row += speed
+
+    remove_obstacle(obstacle)

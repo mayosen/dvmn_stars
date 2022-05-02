@@ -1,13 +1,29 @@
 import time
+from collections import deque
 from curses import window
 from typing import Coroutine
 
-COROUTINES = []
+from obstacles import Obstacle
+
+COROUTINES = deque()
+OBSTACLES = deque()
 TIC_TIMEOUT = 0.1
 
 
 def add_coroutine(*coroutines: Coroutine):
     COROUTINES.extend(coroutines)
+
+
+def get_obstacles():
+    return OBSTACLES
+
+
+def add_obstacle(obstacle: Obstacle):
+    OBSTACLES.append(obstacle)
+
+
+def remove_obstacle(obstacle: Obstacle):
+    OBSTACLES.remove(obstacle)
 
 
 def loop(canvas: window):

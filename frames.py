@@ -18,6 +18,7 @@ class Frame:
         self.uid = file.removesuffix(".txt")
         self.frame = read_frame(file)
         self.rows, self.columns = self.sizes = get_frame_size(self.frame)
+        self.center = self.columns // 2
 
 
 SHIP_FRAMES = tuple(

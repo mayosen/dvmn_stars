@@ -1,44 +1,24 @@
-import asyncio
 import curses
 from curses import window
 from random import randint, choice
 
 import events
 import objects
-from frames import Frame, GARBAGE_FRAMES, SHIP_FRAMES
+from frames import GARBAGE_FRAMES
 from obstacles import show_obstacles, Obstacle
 
 
-async def fill_orbit_with_garbage(canvas, frames: list[Frame]):
+async def fill_orbit_with_garbage(canvas):
     _, canvas_columns = canvas.getmaxyx()
-    count = 5
-    garbage = []
-    obstacles = []
-
-    def append_random_garbage():
-        frame = choice(frames)
-        column = randint(0, canvas_columns - frame.columns - 1)
-        speed = 0.2
-
-        garbage.append(
-            objects.fly_garbage(canvas, frame.frame, column, speed)
-        )
-        # obstacles.append(Obstacle(0, column, frame.rows, frame.columns, frame.uid))
-
-    for _ in range(count):
-        append_random_garbage()
 
     while True:
-        # await show_obstacles(canvas, obstacles)
-
-        for coro in garbage.copy():
-            try:
-                coro.send(None)
-            except StopIteration:
-                garbage.remove(coro)
-                append_random_garbage()
-
-        await asyncio.sleep(0)
+        frame = choice(GARBAGE_FRAMES)
+        column = randint(0 - frame.center, canvas_columns - frame.center)
+        obstacle = Obstacle(frame, column)
+        events.add_obstacle(obstacle)
+        garbage = objects.fly_garbage(canvas, obstacle, column)
+        events.add_coroutine(garbage)
+        await objects.wait_for(randint(10, 110))
 
 
 def draw(canvas: window):
@@ -46,11 +26,12 @@ def draw(canvas: window):
     curses.curs_set(False)
     canvas.nodelay(True)
 
-    stars = objects.get_stars(canvas, amount=50)
-    ship = objects.get_ship(canvas, SHIP_FRAMES, speed=1)
-    garbage = fill_orbit_with_garbage(canvas, GARBAGE_FRAMES)
+    stars = objects.get_stars(canvas)
+    ship = objects.get_ship(canvas, speed=1)
+    garbage_spawner = fill_orbit_with_garbage(canvas)
+    obstacle_viewer = show_obstacles(canvas, events.get_obstacles())
 
-    events.add_coroutine(*stars, ship, garbage)
+    events.add_coroutine(*stars, ship, obstacle_viewer, garbage_spawner)
     events.loop(canvas)
 
 
