@@ -1,3 +1,5 @@
+from _curses import window
+
 SPACE_KEY_CODE = 32
 LEFT_KEY_CODE = 260
 RIGHT_KEY_CODE = 261
@@ -5,7 +7,7 @@ UP_KEY_CODE = 259
 DOWN_KEY_CODE = 258
 
 
-def draw_frame(canvas, start_row, start_column, text, negative=False):
+def draw_frame(canvas: window, start_row, start_column, text: str, negative=False):
     rows_number, columns_number = canvas.getmaxyx()
 
     for row, line in enumerate(text.splitlines(), round(start_row)):
@@ -28,7 +30,7 @@ def draw_frame(canvas, start_row, start_column, text, negative=False):
             canvas.addch(row, column, symbol)
 
 
-def read_controls(canvas):
+def read_controls(canvas: window):
     rows_direction = columns_direction = 0
     space_pressed = False
 

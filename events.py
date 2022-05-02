@@ -47,11 +47,11 @@ def add_coroutine(*coroutines: Coroutine):
 
 def loop(canvas: window):
     while True:
-        for coro in COROUTINES.copy():
+        for coroutine in COROUTINES.copy():
             try:
-                coro.send(None)
+                coroutine.send(None)
             except StopIteration:
-                COROUTINES.remove(coro)
+                COROUTINES.remove(coroutine)
                 continue
 
         canvas.refresh()

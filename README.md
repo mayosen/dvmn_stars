@@ -1,3 +1,3 @@
-# Devman. Асихнронный Python
+# Devman. Асинхронный Python
 
 ## Модуль 2

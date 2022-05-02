@@ -1,5 +1,6 @@
 import asyncio
 import curses
+from _curses import window
 from itertools import cycle
 from random import randint, choice
 
@@ -18,7 +19,7 @@ async def wait_for(ticks):
         await asyncio.sleep(0)
 
 
-async def blink(canvas, row, column, symbol=STAR_SYMBOLS[0]):
+async def blink(canvas: window, row, column, symbol=STAR_SYMBOLS[0]):
     canvas.addstr(row, column, symbol, curses.A_DIM)
     await wait_for(randint(0, 30))
 
@@ -33,7 +34,7 @@ async def blink(canvas, row, column, symbol=STAR_SYMBOLS[0]):
         await wait_for(20)
 
 
-def get_stars(canvas, amount=50, offset_row=1, offset_column=1):
+def get_stars(canvas: window, amount=50, offset_row=2, offset_column=2):
     rows, columns = canvas.getmaxyx()
     stars = [
         blink(
@@ -47,7 +48,7 @@ def get_stars(canvas, amount=50, offset_row=1, offset_column=1):
     return stars
 
 
-async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0):
+async def fire(canvas: window, start_row, start_column, rows_speed=-0.3, columns_speed=0):
     row, column = start_row, start_column
 
     canvas.addstr(round(row), round(column), '*')
@@ -79,7 +80,7 @@ async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0
         column += columns_speed
 
 
-async def get_ship(canvas, speed=3, ship_row=15, ship_column=20):
+async def get_ship(canvas: window, speed=3, ship_row=15, ship_column=20):
     canvas_rows, canvas_columns = canvas.getmaxyx()
     first, second = SHIP_FRAMES
     frame = first
@@ -132,7 +133,7 @@ async def get_ship(canvas, speed=3, ship_row=15, ship_column=20):
         draw_frame(canvas, ship_row, ship_column, frame.frame, negative=True)
 
 
-async def fly_garbage(canvas, obstacle: Obstacle, column, speed=0.2):
+async def fly_garbage(canvas: window, obstacle: Obstacle, column, speed=0.2):
     canvas_rows, _ = canvas.getmaxyx()
 
     while obstacle.row < canvas_rows:
@@ -148,7 +149,7 @@ async def fly_garbage(canvas, obstacle: Obstacle, column, speed=0.2):
     obstacles.remove(obstacle)
 
 
-async def fill_orbit_with_garbage(canvas):
+async def fill_orbit_with_garbage(canvas: window):
     _, canvas_columns = canvas.getmaxyx()
 
     while True:
@@ -161,7 +162,7 @@ async def fill_orbit_with_garbage(canvas):
         await wait_for(randint(10, 110))
 
 
-async def explode(canvas, center_row, center_column):
+async def explode(canvas: window, center_row, center_column):
     rows, columns = EXPLOSION_FRAMES[0].sizes
     corner_row = center_row - rows // 2
     corner_column = center_column - columns // 2

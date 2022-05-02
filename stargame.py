@@ -1,11 +1,12 @@
 import curses
+from _curses import window
 
 import events
 from objects import get_stars, get_ship, fill_orbit_with_garbage
 from obstacles import show_obstacles
 
 
-def draw(canvas):
+def draw(canvas: window):
     curses.use_default_colors()
     curses.curs_set(False)
     canvas.nodelay(True)
