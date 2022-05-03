@@ -4,9 +4,8 @@ from _curses import window
 from itertools import cycle
 from random import randint, choice
 
-import events
-from events import add_coroutine, obstacles, blown_obstacles
-from frames import SHIP_FRAMES, GARBAGE_FRAMES, EXPLOSION_FRAMES, GAMEOVER_FRAME
+from events import TICS_PER_SECOND, add_coroutine, Obstacles, BlownObstacles, Game
+from frames import SHIP_FRAMES, GARBAGE_FRAMES, EXPLOSION_FRAMES, GAME_OVER_FRAME
 from obstacles import Obstacle
 from physics import update_speed
 from utils import read_controls, draw_frame
@@ -19,7 +18,7 @@ async def wait_for(ticks):
         await asyncio.sleep(0)
 
 
-async def blink(canvas: window, row, column, symbol=STAR_SYMBOLS[0]):
+async def blink(canvas: window, row, column, symbol):
     canvas.addstr(row, column, symbol, curses.A_DIM)
     await wait_for(randint(0, 30))
 
@@ -66,11 +65,12 @@ async def fire(canvas: window, start_row, start_column, rows_speed=-0.3, columns
     curses.beep()
 
     while 0 < row < max_row and 0 < column < max_column:
-        for obstacle in obstacles.get():
+        for obstacle in Obstacles.get():
             if obstacle.has_collision(row, column):
-                blown_obstacles.add(obstacle)
-                obstacles.remove(obstacle)
-                events.add_coroutine(explode(canvas, row, column))
+                Game.increment_score()
+                BlownObstacles.add(obstacle)
+                Obstacles.remove(obstacle)
+                add_coroutine(explode(canvas, row, column))
                 return
 
         canvas.addstr(round(row), round(column), symbol)
@@ -80,7 +80,7 @@ async def fire(canvas: window, start_row, start_column, rows_speed=-0.3, columns
         column += columns_speed
 
 
-async def get_ship(canvas: window, speed=3, ship_row=15, ship_column=20):
+async def get_ship(canvas: window, ship_row=15, ship_column=20):
     canvas_rows, canvas_columns = canvas.getmaxyx()
     first, second = SHIP_FRAMES
     frame = first
@@ -92,15 +92,13 @@ async def get_ship(canvas: window, speed=3, ship_row=15, ship_column=20):
     right_limit = canvas_columns - frame.columns
 
     while True:
-        for obstacle in events.obstacles.get():
+        for obstacle in Obstacles.get():
             if obstacle.has_collision(ship_row, ship_column, frame.rows, frame.columns):
-                events.add_coroutine(show_gameover(canvas))
+                add_coroutine(show_game_over(canvas))
                 return
 
         rows_dir, columns_dir, space_pressed = read_controls(canvas)
-        row_speed, column_speed = update_speed(
-            row_speed, column_speed, rows_dir, columns_dir
-        )
+        row_speed, column_speed = update_speed(row_speed, column_speed, rows_dir, columns_dir)
         ship_row += row_speed
         ship_column += column_speed
 
@@ -116,7 +114,7 @@ async def get_ship(canvas: window, speed=3, ship_row=15, ship_column=20):
 
         if space_pressed:
             bullet_column = ship_column + frame.center
-            bullet_row_speed = -(speed + 0.8)
+            bullet_row_speed = -(row_speed + 0.8)
 
             if column_speed > 0:
                 bullet_column_speed = column_speed + 0.1
@@ -125,12 +123,7 @@ async def get_ship(canvas: window, speed=3, ship_row=15, ship_column=20):
             else:
                 bullet_column_speed = column_speed - 0.1
 
-            add_coroutine(
-                fire(canvas, ship_row, bullet_column,
-                     rows_speed=bullet_row_speed,
-                     columns_speed=bullet_column_speed,
-                     )
-            )
+            add_coroutine(fire(canvas, ship_row, bullet_column, bullet_row_speed, bullet_column_speed))
 
         frame = next(frames_iterator)
         draw_frame(canvas, ship_row, ship_column, frame.frame)
@@ -142,8 +135,8 @@ async def fly_garbage(canvas: window, obstacle: Obstacle, column, speed=0.2):
     canvas_rows, _ = canvas.getmaxyx()
 
     while obstacle.row < canvas_rows:
-        if obstacle in blown_obstacles.get():
-            blown_obstacles.remove(obstacle)
+        if obstacle in BlownObstacles.get():
+            BlownObstacles.remove(obstacle)
             return
 
         draw_frame(canvas, obstacle.row, column, obstacle.frame)
@@ -151,20 +144,25 @@ async def fly_garbage(canvas: window, obstacle: Obstacle, column, speed=0.2):
         draw_frame(canvas, obstacle.row, column, obstacle.frame, True)
         obstacle.row += speed
 
-    obstacles.remove(obstacle)
+    Obstacles.remove(obstacle)
 
 
 async def fill_orbit_with_garbage(canvas: window):
     _, canvas_columns = canvas.getmaxyx()
 
     while True:
-        frame = choice(GARBAGE_FRAMES)
-        column = randint(0 - frame.center, canvas_columns - frame.center)
-        obstacle = Obstacle(frame, column)
-        obstacles.add(obstacle)
-        garbage = fly_garbage(canvas, obstacle, column)
-        events.add_coroutine(garbage)
-        await wait_for(randint(10, 110))
+        tics = get_garbage_delay_tics()
+
+        if tics is not None:
+            frame = choice(GARBAGE_FRAMES)
+            column = randint(0 - frame.center, canvas_columns - frame.center)
+            obstacle = Obstacle(frame, column)
+            Obstacles.add(obstacle)
+            garbage = fly_garbage(canvas, obstacle, column)
+            add_coroutine(garbage)
+            await wait_for(tics)
+        else:
+            await asyncio.sleep(0)
 
 
 async def explode(canvas: window, center_row, center_column):
@@ -179,8 +177,12 @@ async def explode(canvas: window, center_row, center_column):
         draw_frame(canvas, corner_row, corner_column, frame.frame, negative=True)
 
 
-async def show_gameover(canvas: window):
-    frame = GAMEOVER_FRAME
+async def show_game_over(canvas: window):
+    for _ in range(3):
+        curses.beep()
+        await asyncio.sleep(0)
+
+    frame = GAME_OVER_FRAME
     canvas_rows, canvas_columns = canvas.getmaxyx()
     row = (canvas_rows - frame.rows) // 2
     column = (canvas_columns - frame.columns) // 2
@@ -188,3 +190,42 @@ async def show_gameover(canvas: window):
     while True:
         draw_frame(canvas, row, column, frame.frame)
         await asyncio.sleep(0)
+
+
+def get_garbage_delay_tics():
+    year = Game.get_year()
+
+    if year < 1961:
+        return None
+    elif year < 1969:
+        return 20
+    elif year < 1981:
+        return 14
+    elif year < 1995:
+        return 10
+    elif year < 2010:
+        return 8
+    elif year < 2020:
+        return 6
+    else:
+        return 2
+
+
+async def game_counter(canvas: window):
+    rows, _ = canvas.getmaxyx()
+    template = "Score: {score:2d} | Year: {year:4d}{phrase:40s}"
+
+    def draw_info():
+        message = template.format(score=Game.get_score(), year=Game.get_year(), phrase=Game.get_phrase())
+        canvas.addstr(rows - 2, 2, message)
+
+    while True:
+        for _ in range(TICS_PER_SECOND - 1):
+            draw_info()
+            await asyncio.sleep(0)
+            draw_info()
+
+        Game.next_second()
+        draw_info()
+        await asyncio.sleep(0)
+        draw_info()

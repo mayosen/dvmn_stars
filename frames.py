@@ -40,4 +40,4 @@ EXPLOSION_FRAMES = tuple(
     )
 )
 
-GAMEOVER_FRAME = Frame("gameover.txt")
+GAME_OVER_FRAME = Frame("game_over.txt")

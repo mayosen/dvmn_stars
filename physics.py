@@ -38,7 +38,7 @@ def _apply_acceleration(speed, speed_limit, forward=True):
 
 
 def update_speed(row_speed, column_speed, rows_direction, columns_direction,
-                 row_speed_limit=2, column_speed_limit=2, fading=0.8):
+                 row_speed_limit=3, column_speed_limit=3, fading=0.8):
     """Update speed smoothly to make control handy for player.
     Return new speed value (row_speed, column_speed)
     """
