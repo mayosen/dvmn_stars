@@ -58,13 +58,13 @@ class BlownObstacles:
 
 
 class Game:
-    _score = 0
     _seconds = 0
     _year = 1957
+    _finished = False
 
     @classmethod
     def get_score(cls):
-        return cls._score
+        return cls._seconds
 
     @classmethod
     def get_year(cls):
@@ -75,14 +75,15 @@ class Game:
         return (": " + PHRASES[cls._year]) if cls._year in PHRASES else ""
 
     @classmethod
-    def next_second(cls):
-        cls._seconds += 1
-        if cls._seconds % 2 == 0:
-            cls._year += 1
+    def finish(cls):
+        cls._finished = True
 
     @classmethod
-    def increment_score(cls):
-        cls._score += 1
+    def increment(cls):
+        if not cls._finished:
+            cls._seconds += 1
+            if cls._seconds % 2 == 0:
+                cls._year += 1
 
 
 def loop(canvas: window):

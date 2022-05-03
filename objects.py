@@ -67,7 +67,6 @@ async def fire(canvas: window, start_row, start_column, rows_speed=-0.3, columns
     while 0 < row < max_row and 0 < column < max_column:
         for obstacle in Obstacles.get():
             if obstacle.has_collision(row, column):
-                Game.increment_score()
                 BlownObstacles.add(obstacle)
                 Obstacles.remove(obstacle)
                 add_coroutine(explode(canvas, row, column))
@@ -112,7 +111,7 @@ async def get_ship(canvas: window, ship_row=15, ship_column=20):
         elif ship_column + frame_columns > canvas_columns:
             ship_column = right_limit
 
-        if space_pressed:
+        if space_pressed and Game.get_year() >= 2020:
             bullet_column = ship_column + frame.center
             bullet_row_speed = -(row_speed + 0.8)
 
@@ -182,6 +181,7 @@ async def show_game_over(canvas: window):
         curses.beep()
         await asyncio.sleep(0)
 
+    Game.finish()
     frame = GAME_OVER_FRAME
     canvas_rows, canvas_columns = canvas.getmaxyx()
     row = (canvas_rows - frame.rows) // 2
@@ -223,9 +223,7 @@ async def game_counter(canvas: window):
         for _ in range(TICS_PER_SECOND - 1):
             draw_info()
             await asyncio.sleep(0)
-            draw_info()
 
-        Game.next_second()
+        Game.increment()
         draw_info()
         await asyncio.sleep(0)
-        draw_info()
