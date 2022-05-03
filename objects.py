@@ -148,6 +148,7 @@ async def fly_garbage(canvas: window, obstacle: Obstacle, column, speed=0.2):
 
 async def fill_orbit_with_garbage(canvas: window):
     _, canvas_columns = canvas.getmaxyx()
+    speeds = (0.1, 0.2, 0.3)
 
     while True:
         tics = get_garbage_delay_tics()
@@ -157,7 +158,7 @@ async def fill_orbit_with_garbage(canvas: window):
             column = randint(0 - frame.center, canvas_columns - frame.center)
             obstacle = Obstacle(frame, column)
             Obstacles.add(obstacle)
-            garbage = fly_garbage(canvas, obstacle, column)
+            garbage = fly_garbage(canvas, obstacle, column, choice(speeds))
             add_coroutine(garbage)
             await wait_for(tics)
         else:
