@@ -33,7 +33,7 @@ async def blink(canvas: window, row, column, symbol):
         await wait_for(20)
 
 
-def get_stars(canvas: window, amount=50, offset_row=2, offset_column=2):
+def spawn_stars(canvas: window, amount=50, offset_row=2, offset_column=2):
     rows, columns = canvas.getmaxyx()
     stars = [
         blink(
@@ -79,7 +79,7 @@ async def fire(canvas: window, start_row, start_column, rows_speed=-0.3, columns
         column += columns_speed
 
 
-async def get_ship(canvas: window, ship_row=15, ship_column=20):
+async def spawn_ship(canvas: window, ship_row=15, ship_column=20):
     canvas_rows, canvas_columns = canvas.getmaxyx()
     first, second = SHIP_FRAMES
     frame = first
@@ -110,7 +110,7 @@ async def get_ship(canvas: window, ship_row=15, ship_column=20):
             ship_column = 0
         elif ship_column + frame_columns > canvas_columns:
             ship_column = right_limit
-        
+
         if space_pressed and Game.get_year() >= 1970:
             bullet_column = ship_column + frame.center
             bullet_row_speed = -(row_speed + 0.8)
@@ -212,7 +212,7 @@ def get_garbage_delay_tics():
         return 2
 
 
-async def game_counter(canvas: window):
+async def spawn_game_counter(canvas: window):
     rows, _ = canvas.getmaxyx()
 
     def draw_info():
