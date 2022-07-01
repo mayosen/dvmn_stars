@@ -10,8 +10,6 @@ from obstacles import Obstacle
 from physics import update_speed
 from utils import read_controls, draw_frame
 
-STAR_SYMBOLS = ('*', '+', '.', ':')
-
 
 async def wait_for(ticks):
     for _ in range(ticks):
@@ -35,12 +33,14 @@ async def blink(canvas: window, row, column, symbol):
 
 def spawn_stars(canvas: window, amount=50, offset_row=2, offset_column=2):
     rows, columns = canvas.getmaxyx()
+    symbols = ('*', '+', '.', ':')
+
     stars = [
         blink(
             canvas,
             randint(offset_row, rows - offset_row),
             randint(offset_column, columns - offset_column),
-            choice(STAR_SYMBOLS)
+            choice(symbols)
         ) for _ in range(amount)
     ]
 
@@ -81,10 +81,9 @@ async def fire(canvas: window, start_row, start_column, rows_speed=-0.3, columns
 
 async def spawn_ship(canvas: window, ship_row=15, ship_column=20):
     canvas_rows, canvas_columns = canvas.getmaxyx()
-    first, second = SHIP_FRAMES
-    frame = first
-    frame_rows, frame_columns = frame.sizes
-    frames_iterator = cycle([first, first, second, second])
+    first_frame, second_frame = SHIP_FRAMES
+    frame = first_frame
+    frames_iterator = cycle([first_frame, first_frame, second_frame, second_frame])
     row_speed = column_speed = 0
 
     bottom_limit = canvas_rows - frame.rows
@@ -101,15 +100,11 @@ async def spawn_ship(canvas: window, ship_row=15, ship_column=20):
         ship_row += row_speed
         ship_column += column_speed
 
-        if ship_row < 0:
-            ship_row = 0
-        elif ship_row + frame_rows > canvas_rows:
-            ship_row = bottom_limit
+        ship_row = max(0, ship_row)
+        ship_row = min(ship_row, bottom_limit)
 
-        if ship_column < 0:
-            ship_column = 0
-        elif ship_column + frame_columns > canvas_columns:
-            ship_column = right_limit
+        ship_column = max(0, ship_column)
+        ship_column = min(ship_column, right_limit)
 
         if space_pressed and Game.get_year() >= 1970:
             bullet_column = ship_column + frame.center
@@ -153,7 +148,7 @@ async def fill_orbit_with_garbage(canvas: window):
     while True:
         tics = get_garbage_delay_tics()
 
-        if tics is not None:
+        if tics:
             frame = choice(GARBAGE_FRAMES)
             column = randint(0 - frame.center, canvas_columns - frame.center)
             obstacle = Obstacle(frame, column)
