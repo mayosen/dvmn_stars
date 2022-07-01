@@ -96,7 +96,6 @@ class EventLoop:
                     coroutine.send(None)
                 except StopIteration:
                     cls._coroutines.remove(coroutine)
-                    continue
 
             canvas.refresh()
             time.sleep(TIC_TIMEOUT)

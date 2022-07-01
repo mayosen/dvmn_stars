@@ -110,8 +110,8 @@ async def get_ship(canvas: window, ship_row=15, ship_column=20):
             ship_column = 0
         elif ship_column + frame_columns > canvas_columns:
             ship_column = right_limit
-
-        if space_pressed and Game.get_year() >= 2020:
+        
+        if space_pressed and Game.get_year() >= 1970:
             bullet_column = ship_column + frame.center
             bullet_row_speed = -(row_speed + 0.8)
 
@@ -214,10 +214,9 @@ def get_garbage_delay_tics():
 
 async def game_counter(canvas: window):
     rows, _ = canvas.getmaxyx()
-    template = "Score: {score:2d} | Year: {year:4d}{phrase:40s}"
 
     def draw_info():
-        message = template.format(score=Game.get_score(), year=Game.get_year(), phrase=Game.get_phrase())
+        message = f"Score: {Game.get_score():2d} | Year: {Game.get_year():4d}{Game.get_phrase():40s}"
         canvas.addstr(rows - 2, 2, message)
 
     while True:
