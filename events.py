@@ -67,7 +67,7 @@ class Game:
 
     @classmethod
     def get_phrase(cls):
-        return (": " + PHRASES[cls._year]) if cls._year in PHRASES else ""
+        return f": {PHRASES[cls._year]}" if cls._year in PHRASES else ""
 
     @classmethod
     def finish(cls):
