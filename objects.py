@@ -4,7 +4,7 @@ from _curses import window
 from itertools import cycle
 from random import randint, choice
 
-from events import TICS_PER_SECOND, add_coroutine, Obstacles, BlownObstacles, Game
+from events import TICS_PER_SECOND, EventLoop, Obstacles, BlownObstacles, Game
 from frames import SHIP_FRAMES, GARBAGE_FRAMES, EXPLOSION_FRAMES, GAME_OVER_FRAME
 from obstacles import Obstacle
 from physics import update_speed
@@ -69,7 +69,7 @@ async def fire(canvas: window, start_row, start_column, rows_speed=-0.3, columns
             if obstacle.has_collision(row, column):
                 BlownObstacles.add(obstacle)
                 Obstacles.remove(obstacle)
-                add_coroutine(explode(canvas, row, column))
+                EventLoop.add_coroutine(explode(canvas, row, column))
                 return
 
         canvas.addstr(round(row), round(column), symbol)
@@ -93,7 +93,7 @@ async def get_ship(canvas: window, ship_row=15, ship_column=20):
     while True:
         for obstacle in Obstacles.get():
             if obstacle.has_collision(ship_row, ship_column, frame.rows, frame.columns):
-                add_coroutine(show_game_over(canvas))
+                EventLoop.add_coroutine(show_game_over(canvas))
                 return
 
         rows_dir, columns_dir, space_pressed = read_controls(canvas)
@@ -122,7 +122,7 @@ async def get_ship(canvas: window, ship_row=15, ship_column=20):
             else:
                 bullet_column_speed = column_speed - 0.1
 
-            add_coroutine(fire(canvas, ship_row, bullet_column, bullet_row_speed, bullet_column_speed))
+            EventLoop.add_coroutine(fire(canvas, ship_row, bullet_column, bullet_row_speed, bullet_column_speed))
 
         frame = next(frames_iterator)
         draw_frame(canvas, ship_row, ship_column, frame.frame)
@@ -159,7 +159,7 @@ async def fill_orbit_with_garbage(canvas: window):
             obstacle = Obstacle(frame, column)
             Obstacles.add(obstacle)
             garbage = fly_garbage(canvas, obstacle, column, choice(speeds))
-            add_coroutine(garbage)
+            EventLoop.add_coroutine(garbage)
             await wait_for(tics)
         else:
             await asyncio.sleep(0)

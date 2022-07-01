@@ -1,9 +1,8 @@
 import curses
 from _curses import window
 
-import events
+from events import EventLoop
 from objects import get_stars, get_ship, fill_orbit_with_garbage, game_counter
-from obstacles import show_obstacles
 
 
 def draw(canvas: window):
@@ -14,12 +13,14 @@ def draw(canvas: window):
     stars = get_stars(canvas)
     ship = get_ship(canvas)
     garbage_spawner = fill_orbit_with_garbage(canvas)
-    # obstacle_viewer = show_obstacles(canvas, events.Obstacles.get())
     game = game_counter(canvas)
 
-    events.add_coroutine(*stars, ship, game, garbage_spawner)
-    # events.add_coroutine(*stars, ship, obstacle_viewer, game, garbage_spawner)
-    events.loop(canvas)
+    EventLoop.add_coroutine(*stars, ship, game, garbage_spawner)
+
+    # obstacle_viewer = show_obstacles(canvas, Obstacles.get())
+    # EventLoop.add_coroutine(obstacle_viewer)
+
+    EventLoop.start(canvas)
 
 
 if __name__ == '__main__':

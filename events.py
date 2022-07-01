@@ -5,7 +5,6 @@ from typing import Coroutine
 
 from obstacles import Obstacle
 
-COROUTINES = deque()
 TIC_TIMEOUT = 0.1
 TICS_PER_SECOND = round(1 / TIC_TIMEOUT)
 
@@ -19,10 +18,6 @@ PHRASES = {
     2011: 'Messenger launch to Mercury',
     2020: "Take the plasma gun! Shoot the garbage!",
 }
-
-
-def add_coroutine(*coroutines: Coroutine):
-    COROUTINES.extend(coroutines)
 
 
 class Obstacles:
@@ -86,14 +81,22 @@ class Game:
                 cls._year += 1
 
 
-def loop(canvas: window):
-    while True:
-        for coroutine in COROUTINES.copy():
-            try:
-                coroutine.send(None)
-            except StopIteration:
-                COROUTINES.remove(coroutine)
-                continue
+class EventLoop:
+    _coroutines = deque()
 
-        canvas.refresh()
-        time.sleep(TIC_TIMEOUT)
+    @classmethod
+    def add_coroutine(cls, *coroutines: Coroutine):
+        cls._coroutines.extend(coroutines)
+
+    @classmethod
+    def start(cls, canvas: window):
+        while True:
+            for coroutine in cls._coroutines.copy():
+                try:
+                    coroutine.send(None)
+                except StopIteration:
+                    cls._coroutines.remove(coroutine)
+                    continue
+
+            canvas.refresh()
+            time.sleep(TIC_TIMEOUT)
