@@ -5,24 +5,8 @@ from typing import Coroutine
 
 from obstacles import Obstacle
 
-COROUTINES = deque()
 TIC_TIMEOUT = 0.1
 TICS_PER_SECOND = round(1 / TIC_TIMEOUT)
-
-PHRASES = {
-    1957: "First Sputnik",
-    1961: "Gagarin flew!",
-    1969: "Armstrong got on the moon!",
-    1971: "First orbital space station Salute-1",
-    1981: "Flight of the Shuttle Columbia",
-    1998: 'ISS start building',
-    2011: 'Messenger launch to Mercury',
-    2020: "Take the plasma gun! Shoot the garbage!",
-}
-
-
-def add_coroutine(*coroutines: Coroutine):
-    COROUTINES.extend(coroutines)
 
 
 class Obstacles:
@@ -62,6 +46,17 @@ class Game:
     _year = 1957
     _finished = False
 
+    PHRASES = {
+        1957: "First Sputnik",
+        1961: "Gagarin flew!",
+        1969: "Armstrong got on the moon!",
+        1971: "First orbital space station Salute-1",
+        1981: "Flight of the Shuttle Columbia",
+        1998: 'ISS start building',
+        2011: 'Messenger launch to Mercury',
+        2020: "Take the plasma gun! Shoot the garbage!",
+    }
+
     @classmethod
     def get_score(cls):
         return cls._seconds
@@ -72,7 +67,7 @@ class Game:
 
     @classmethod
     def get_phrase(cls):
-        return (": " + PHRASES[cls._year]) if cls._year in PHRASES else ""
+        return f": {cls.PHRASES[cls._year]}" if cls._year in cls.PHRASES else ""
 
     @classmethod
     def finish(cls):
@@ -86,14 +81,21 @@ class Game:
                 cls._year += 1
 
 
-def loop(canvas: window):
-    while True:
-        for coroutine in COROUTINES.copy():
-            try:
-                coroutine.send(None)
-            except StopIteration:
-                COROUTINES.remove(coroutine)
-                continue
+class EventLoop:
+    _coroutines = deque()
 
-        canvas.refresh()
-        time.sleep(TIC_TIMEOUT)
+    @classmethod
+    def add_coroutine(cls, *coroutines: Coroutine):
+        cls._coroutines.extend(coroutines)
+
+    @classmethod
+    def start(cls, canvas: window):
+        while True:
+            for coroutine in cls._coroutines.copy():
+                try:
+                    coroutine.send(None)
+                except StopIteration:
+                    cls._coroutines.remove(coroutine)
+
+            canvas.refresh()
+            time.sleep(TIC_TIMEOUT)

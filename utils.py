@@ -1,4 +1,4 @@
-from _curses import window
+from curses import window
 
 SPACE_KEY_CODE = 32
 LEFT_KEY_CODE = 260
